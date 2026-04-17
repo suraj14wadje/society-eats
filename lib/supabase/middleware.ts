@@ -2,8 +2,17 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/supabase";
 
-const PUBLIC_PATHS = ["/signin", "/verify"];
-const NO_PROFILE_ALLOWED_PATHS = ["/onboarding"];
+// Anyone (authed or not) can hit these paths. Everything outside this set that
+// isn't /admin/* still requires a session, but doesn't require a profile.
+const PUBLIC_PATHS = new Set(["/", "/cart", "/checkout", "/checkout/verify"]);
+
+function isAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.has(pathname);
+}
 
 export async function updateSession(
   request: NextRequest,
@@ -36,28 +45,25 @@ export async function updateSession(
   } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isPublicPath = PUBLIC_PATHS.includes(pathname);
-  const isOnboardingPath = NO_PROFILE_ALLOWED_PATHS.includes(pathname);
 
-  if (!user) {
-    if (isPublicPath) return response;
-    return redirectTo(request, "/signin");
+  // Admin paths require a signed-in admin. Non-admins get bounced to the menu.
+  if (isAdminPath(pathname)) {
+    if (!user) return redirectTo(request, "/");
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!profile?.is_admin) return redirectTo(request, "/");
+    return response;
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Public paths: menu, cart, checkout, OTP. Anyone can see them.
+  if (isPublicPath(pathname)) return response;
 
-  if (!profile) {
-    if (isOnboardingPath) return response;
-    return redirectTo(request, "/onboarding");
-  }
-
-  if (isPublicPath || isOnboardingPath) {
-    return redirectTo(request, "/menu");
-  }
+  // Everything else (history, orders) requires a session. RLS enforces per-row
+  // visibility so no need to also re-check profile here.
+  if (!user) return redirectTo(request, "/");
 
   return response;
 }

@@ -1,6 +1,3 @@
-// Auto-generated from the local Supabase DB. Do not edit by hand.
-// Regenerate via: `pnpm supabase:types`
-
 export type Json =
   | string
   | number
@@ -75,6 +72,7 @@ export type Database = {
           is_available: boolean;
           name: string;
           price_inr: number;
+          stock: number | null;
           updated_at: string;
         };
         Insert: {
@@ -85,6 +83,7 @@ export type Database = {
           is_available?: boolean;
           name: string;
           price_inr: number;
+          stock?: number | null;
           updated_at?: string;
         };
         Update: {
@@ -95,6 +94,7 @@ export type Database = {
           is_available?: boolean;
           name?: string;
           price_inr?: number;
+          stock?: number | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -147,7 +147,6 @@ export type Database = {
           status: Database["public"]["Enums"]["order_status"];
           total_inr: number;
           updated_at: string;
-          upi_ref: string | null;
           user_id: string;
         };
         Insert: {
@@ -158,7 +157,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           total_inr: number;
           updated_at?: string;
-          upi_ref?: string | null;
           user_id: string;
         };
         Update: {
@@ -169,7 +167,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["order_status"];
           total_inr?: number;
           updated_at?: string;
-          upi_ref?: string | null;
           user_id?: string;
         };
         Relationships: [
@@ -239,18 +236,21 @@ export type Database = {
           created_at: string;
           id: string;
           name: string;
+          orders_paused: boolean;
         };
         Insert: {
           code: string;
           created_at?: string;
           id?: string;
           name: string;
+          orders_paused?: boolean;
         };
         Update: {
           code?: string;
           created_at?: string;
           id?: string;
           name?: string;
+          orders_paused?: boolean;
         };
         Relationships: [];
       };
@@ -259,6 +259,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      advance_order: {
+        Args: { p_order_id: string };
+        Returns: Database["public"]["Enums"]["order_status"];
+      };
+      create_order: {
+        Args: {
+          p_items: Json;
+          p_note: string;
+          p_slot: Database["public"]["Enums"]["delivery_slot"];
+        };
+        Returns: string;
+      };
       is_admin: { Args: never; Returns: boolean };
     };
     Enums: {

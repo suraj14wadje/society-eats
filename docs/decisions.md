@@ -178,3 +178,93 @@ Operational follow-through:
 - **−** Any future desire for a richer admin dashboard (wide tables, side-by-side panels) will need either a dedicated `/admin` layout that opts out of the app shell, or a new ADR reversing this one.
 
 Related: `app/layout.tsx`, `scripts/screenshot.sh`, the "Mobile-First Responsive Rules" section in `CLAUDE.md`.
+
+---
+
+## ADR-008 — Cash-on-Delivery for v1 (supersedes ADR-002)
+
+**Date**: 2026-04-18
+**Status**: Accepted
+
+### Context
+
+Meera (the kitchen owner) pushed back on UPI manual reconciliation during the Hi-Fi design review. She already handles cash every day when residents come by in person, and she'd rather count notes at the door than cross-check UPI references in her bank app. The resident Hi-Fi prototype also treats "Cash On Delivery · Pay Meera At The Door" as the only payment surface, and the operator prototype assumes cash handoff in the delivery step.
+
+### Decision
+
+Payment method in v1 = Cash on Delivery. No UPI capture, no payment reconciliation step. Orders move from `placed` → `cooking` → `out_for_delivery` → `delivered` without a `payment_pending` stage in the happy path. The `payment_pending` / `paid` enum values remain for forward compatibility but are not used by the happy path.
+
+`orders.upi_ref` column is dropped in migration `0002_cod_operator_public_menu.sql`.
+
+### Consequences
+
+- **+** One fewer concept for residents to learn. No UPI screen, no reference-number entry.
+- **+** Meera collects cash at the door — no bank-app context switching.
+- **+** Matches Hi-Fi design exactly; keeps the resident and operator flows consistent.
+- **−** No digital paper trail for payment. If a resident disputes a charge, the only record is Meera's memory. Acceptable at 50–150-household scale; revisit when we hit 300+.
+- **−** Meera must carry change. Encourage residents in-copy to "keep small notes handy".
+
+### Reversal path
+
+If volume grows and cash handoff becomes painful, a follow-on ADR will add UPI or a real PSP integration. The schema already has the enum values; the reversal is UI-only plus a payment-capture step.
+
+Related: `supabase/migrations/0002_cod_operator_public_menu.sql`, `components/screens/resident/address-card.tsx`.
+
+---
+
+## ADR-009 — Menu-first, auth-at-checkout
+
+**Date**: 2026-04-18
+**Status**: Accepted
+
+### Context
+
+The original flow (ADR-era pre-009) was signin → OTP → onboarding → menu. Three screens of friction before a first-time resident sees a single thali. The Hi-Fi iteration flipped it: menu is the landing page with no login required; auth triggers only when the resident taps Checkout on their cart.
+
+### Decision
+
+`/` is now the public menu. `/cart` and `/checkout` are public. Auth (phone OTP) runs inside `/checkout` for first-time users, collapsing the old `/signin` + `/verify` + `/onboarding` trio into a single `Details → OTP` step. Returning residents whose `profiles` row is populated see a saved-address confirmation card instead.
+
+Middleware `PUBLIC_PATHS` is now `{/, /cart, /checkout, /checkout/verify}`. Everything else (history, orders, admin) requires a session; `/admin/*` additionally requires `profiles.is_admin = true`.
+
+Menu-catalog RLS policies (`societies`, `buildings`, `menu_items`) are loosened to allow `anon` reads so the public menu can render without a session cookie.
+
+### Consequences
+
+- **+** First impression is thalis, not a login wall. Residents understand the product before committing.
+- **+** Onboarding is no longer a dedicated step — it's the first half of the details form residents already have to fill when placing a first order.
+- **+** Fewer routes: `/signin`, `/verify`, `/onboarding` are removed.
+- **−** Anonymous users can read the menu + society name. That's intentional and low-risk — no PII is exposed — but any future PII-adjacent column on `menu_items` or `societies` needs a conscious choice about `anon` visibility.
+- **−** Cart state lives in `localStorage` pre-auth, which means clearing site data loses a cart in progress. Acceptable; we can move to DB-backed carts later if attrition data warrants it.
+
+Related: `lib/supabase/middleware.ts`, `app/page.tsx`, `app/checkout/page.tsx`, migration `0002_cod_operator_public_menu.sql`.
+
+---
+
+## ADR-010 — Admin operates the kitchen in-product via `/admin/*`
+
+**Date**: 2026-04-18
+**Status**: Accepted
+
+### Context
+
+The scope doc previously deferred "admin menu CRUD UI" to manual Supabase Studio edits. The Hi-Fi iteration added two admin screens — _Today's Board_ (live queue with stage transitions) and _Kitchen Controls_ (pause toggle + per-item availability + stock) — because Meera needs something she can use on her phone, not a Studio console from a laptop.
+
+### Decision
+
+Ship `/admin/queue` and `/admin/controls` as first-class routes gated by `profiles.is_admin = true` in middleware. Two new Postgres RPCs back them:
+
+- `public.create_order(p_items jsonb, p_note text, p_slot delivery_slot)` — resident-facing, atomic stock-check + order insert. Raises `sold_out:<uuid>` or `kitchen_paused` so the app can route to the right error state.
+- `public.advance_order(p_order_id uuid)` — admin-only, walks the order through the status enum one step at a time.
+
+Two new columns support the panel: `societies.orders_paused boolean` and `menu_items.stock integer null`. Null stock = untracked (unlimited); 0 = sold out. The `create_order` RPC decrements stock under `for update` locking.
+
+### Consequences
+
+- **+** Meera runs her kitchen from the same phone she takes calls on. No Studio, no desktop required.
+- **+** Residents see real sold-out + paused states because stock and `orders_paused` drive the UI directly.
+- **+** The admin RPC is the single server-side entry point for status transitions — easier to audit than ad-hoc updates from a dashboard.
+- **−** Two admin screens, one new role, extra RLS + RPC surface to keep tested. Mitigated: transitions go through `advance_order` (not raw UPDATE), so RLS only needs to guard `societies.orders_paused` and `menu_items` updates — both already admin-only via `is_admin()`.
+- **−** Stock decrement is eventually consistent with reality — Meera might cook an extra thali without updating. Acceptable; the operator screen is the single place she goes to reconcile.
+
+Related: `supabase/migrations/0002_cod_operator_public_menu.sql`, `app/admin/queue/page.tsx`, `app/admin/controls/page.tsx`.
