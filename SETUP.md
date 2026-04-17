@@ -24,7 +24,7 @@ Expected after these run:
 - Postgres listening on `127.0.0.1:54322`
 - API gateway (PostgREST + Auth + Storage) on `http://127.0.0.1:54321`
 - Supabase Studio on `http://127.0.0.1:54323`
-- 6 tables in the `public` schema (`societies`, `buildings`, `profiles`, `menu_items`, `orders`, `order_items`), 1 society row, 3 building rows, 5 menu items.
+- 6 tables in the `public` schema (`societies`, `buildings`, `profiles`, `menu_items`, `orders`, `order_items`), 1 society row (`Gokhale Mist` / code `1234`), 2 building rows (`Air`, `Aqua`), 5 menu items.
 
 ### 1.3 Capture env vars
 
