@@ -125,7 +125,10 @@ Run in sequence:
 3. `pnpm test` — must be all green, no skips
 4. `pnpm build` — must pass, no warnings that hide errors
 5. `pnpm start` **in background** on the built output. Wait for `http://localhost:3000` to respond 200.
-6. For every new UI page: `./scripts/screenshot.sh <path> <issue-N-page-name>`. Artifacts land in `evidence/screenshots/YYYY-MM-DD-issue-N-*.png`. Read each PNG back to confirm it renders correctly.
+6. For every new UI page, capture screenshots into `evidence/screenshots/YYYY-MM-DD-issue-N-*.png` and read each PNG back to confirm it renders correctly:
+   - **Static / public pages** → `./scripts/screenshot.sh <path> <issue-N-page-name>`. This script only navigates to a URL — it cannot click, type, or log in.
+   - **Flows requiring login or interaction** (OTP signup, onboarding, menu, checkout, admin) → drive with the **Playwright MCP** (`navigate` → `fill` → `click` → `screenshot`). Save PNGs to the same `evidence/screenshots/` path.
+   - Do not invent phone numbers. Log in via the pre-registered local test OTPs in `supabase/config.toml` under `[auth.sms.test_otp]` (e.g. `+919999900001` / `123456`). Other fixtures (society, buildings, menu, admin) come from `supabase/seed.sql` via `npx supabase db reset`. If the ticket needs a new fixture or test phone, add it to `test_otp` + `seed.sql` in this same PR.
 7. Smoke-test the golden-path API / page flow (signup → onboarding → menu → checkout, or whatever the ticket exposes). Check response bodies, not just status codes.
 8. Stop the background server before continuing.
 
@@ -249,6 +252,8 @@ NEXT: Review the screenshots and PR, then APPROVE (I'll merge + close) or REJECT
 - Do not skip plan mode
 - Do not implement before `ExitPlanMode` is approved
 - Do not use `pnpm dev` for verification screenshots
+- Do not use `./scripts/screenshot.sh` for flows that require login/clicks — it only loads a URL. Use the Playwright MCP for interactive flows
+- Do not invent phone numbers or mock auth — log in via `[auth.sms.test_otp]` pairs in `supabase/config.toml`
 - Do not `git add -A` — stage specific files only (avoid .env leaks)
 - Do not skip git hooks (`--no-verify`)
 - Do not amend pushed commits

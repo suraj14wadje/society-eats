@@ -40,7 +40,7 @@ After human selects, implement completely. Do not stop partway to ask more quest
 Create feature branch, write code, write tests — all in one pass.
 
 **Step 3 — Test & Generate Evidence**
-Run ALL tests and capture output. For UI changes: take screenshots with Playwright via `./scripts/screenshot.sh`.
+Run ALL tests and capture output. For UI changes: static pages use `./scripts/screenshot.sh <path> <name>`; flows that need login or clicks use the Playwright MCP (see "Screenshot tests" below for credentials and rules).
 Generate a COMPLETION REPORT:
 
 ```
@@ -164,9 +164,12 @@ Every feature requires tests before completion.
 
 ### Screenshot tests (required for UI changes)
 
-- Capture with Playwright via `./scripts/screenshot.sh <path> <name>`.
-- Saved to `evidence/screenshots/YYYY-MM-DD-<name>.png`.
-- **Default viewport is mobile (390×844)** — this is what reviewers see, because this is what users see. Pass `--desktop` to also capture 1280×800 when a change specifically affects the desktop-centered framing.
+Two patterns depending on whether the page needs interaction:
+
+- **Static / public pages** (no auth, no clicks needed) → `./scripts/screenshot.sh <path> <name>`. It just navigates to a URL and snaps the page. Saved to `evidence/screenshots/YYYY-MM-DD-<name>.png`.
+- **Flows that require login or UI interaction** (OTP signup, onboarding, menu → checkout, admin screens) → **use the Playwright MCP**, not `screenshot.sh`. `screenshot.sh` cannot fill inputs, click buttons, or carry a session. Drive the flow through the MCP (`navigate` → `fill` → `click` → `screenshot`) and save PNGs into the same `evidence/screenshots/YYYY-MM-DD-<name>.png` path so evidence lives in one place.
+- **Credentials for interactive flows come from the local Supabase stack** — never invent a phone number or reach for real SMS. Use the pre-registered test OTP pairs in `supabase/config.toml` under `[auth.sms.test_otp]` (e.g. `+919999900001` / `123456`). Any additional fixtures (society, buildings, menu items, admin profile) come from `supabase/seed.sql` after `npx supabase db reset`. If a flow needs a new test user, extend `test_otp` + `seed.sql` in the same PR rather than hand-creating rows.
+- **Default viewport is mobile (390×844)** — this is what reviewers see, because this is what users see. Pass `--desktop` to `screenshot.sh` (or set the MCP viewport to 1280×800) to also capture the desktop-centered framing when a change specifically affects it.
 
 ## PR Workflow
 
@@ -247,7 +250,9 @@ pnpm build                     # Production build
 pnpm start                     # Run prod build (required for screenshot verification)
 
 # Screenshots
-./scripts/screenshot.sh /path name   # Capture page screenshot
+./scripts/screenshot.sh /path name   # Static URL only — no interaction/login
+# Interactive flows (login, forms, clicks): use Playwright MCP with test OTPs
+# from supabase/config.toml → [auth.sms.test_otp], e.g. +919999900001 / 123456
 
 # Supabase (local CLI)
 npx supabase start             # Start local stack
