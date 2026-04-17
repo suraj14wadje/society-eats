@@ -15,6 +15,7 @@ Living document. When a feature gets deferred, moved in, or explicitly ruled out
 9. Admin dashboard — list + filter orders, update status, uses Supabase Realtime
 10. Production deploy on `society-eats.vercel.app`
 11. Initial seed data (society + buildings + 5 menu items) via a Supabase migration
+12. Local-first dev loop: `npx supabase start` + Docker stack + `[auth.sms.test_otp]` covers every v1 feature without a cloud Supabase project; cloud provisioning happens once, paired with the Vercel deploy (tracked in #12, see ADR-006)
 
 ## Deferred to v1.1 or later
 

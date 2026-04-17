@@ -101,6 +101,34 @@ This is documented in [SETUP.md](../SETUP.md).
 
 ---
 
+## ADR-006 — Local Supabase + test_otp is the default dev loop; cloud provisioning waits for deploy
+
+**Date**: 2026-04-17
+**Status**: Accepted
+
+### Context
+
+Ticket #1's original acceptance criteria assumed we'd create a cloud Supabase project, link, `supabase db push`, and enable a real SMS provider (MSG91 / Twilio) on day one. That mixes two concerns: (a) making migrations + types + seed work end-to-end, and (b) standing up the shared dev/prod environment.
+
+(a) unblocks every subsequent ticket (#2–#8). (b) costs money (SMS), adds external account deps, and only matters when a second developer or a live user needs to hit the same DB.
+
+### Decision
+
+Run v1 development entirely against the local Supabase CLI stack (Docker). Use `[auth.sms.test_otp]` in `supabase/config.toml` plus a stub Twilio provider (`enabled = true`, `auth_token = "local-stub"`) so phone OTP works end-to-end without contacting a real SMS provider. Provisioning the cloud project is deferred to a follow-on ticket paired with the Vercel deploy (#9 / #12).
+
+### Consequences
+
+- **+** Every new developer (including future Claude sessions) gets to a working DB + auth in ~5 minutes via `pnpm supabase:start && pnpm supabase:reset` — no accounts, no keys to share.
+- **+** No SMS cost during development. Zero risk of accidentally spamming real phones from a test run.
+- **+** CI has nothing to configure on Supabase's side; env vars are stub strings.
+- **−** The committed `supabase/config.toml` has `auth_token = "local-stub"` inline. A future PR (tracked in #14) must switch this back to `env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)` before the cloud project goes live.
+- **−** First-run is ~2 GB of Docker image pulls. Acceptable one-time cost.
+- **−** `test_otp` only short-circuits the listed numbers; adding new dev accounts means editing `config.toml` + restarting the stack.
+
+Related: [supabase/config.toml](../supabase/config.toml), [SETUP.md](../SETUP.md), GitHub issues #12 (cloud provisioning) and #14 (env-sub restore).
+
+---
+
 ## ADR-005 — Next.js 16 + Tailwind 4 + shadcn "base-nova" preset
 
 **Date**: 2026-04-17
