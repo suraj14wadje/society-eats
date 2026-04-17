@@ -147,3 +147,34 @@ Use the latest: Next 16, React 19, Tailwind 4, shadcn `base-nova` preset. The ti
 - **+** One less version mismatch to debug later.
 - **+** Tailwind 4's CSS-first config is simpler than 3's `tailwind.config.ts`.
 - **−** The shadcn skill's CLI docs may reference the older `default`/`slate` flags that no longer exist in shadcn 4. Handled at the skill level when we hit it.
+
+---
+
+## ADR-007 — Mobile-first responsive design with capped desktop width
+
+**Date**: 2026-04-17
+**Status**: Accepted
+
+### Context
+
+The PRD identifies residents on 4G Android phones as the primary (and essentially only) target users. Despite this, the initial scaffold had no viewport meta tag, no documented mobile-first rule in `CLAUDE.md`, and a screenshot script that captured at Playwright's desktop default (1280×720) — so the completion-report screenshots gating every PR did not reflect what users would actually see. Without a written policy now, every new page built for auth, menu, checkout, and admin would drift toward an implicit desktop-first mental model.
+
+### Decision
+
+Design every page at ~375px first. On wider viewports, content is centered in a `max-w-md` (28rem / 448px) app shell applied once in the root layout — there is no separate desktop layout. `sm:`/`md:`/`lg:` breakpoints are reserved for small typography/spacing tweaks, never layout rewrites (no multi-column grids, no desktop sidebars).
+
+Operational follow-through:
+
+- Root layout sets `width=device-width, initial-scale=1, maximum-scale=1` (the last prevents iOS's input-focus zoom).
+- `scripts/screenshot.sh` defaults to a 390×844 viewport (iPhone 14, close to median Android). A `--desktop` flag captures 1280×800 for the rare case a reviewer wants to see the centered desktop framing.
+- Tap targets must be ≥ 44px; inputs must use `text-base` (16px) to avoid iOS zoom.
+
+### Consequences
+
+- **+** One code path per page — no desktop variants to maintain, no responsive bugs from forgotten breakpoints.
+- **+** Evidence screenshots in PRs match what residents see on their phones.
+- **+** Laptop users get a usable, centered layout for free without any extra work.
+- **−** Power users who want to use the app on a widescreen laptop get a narrow column. Acceptable — they are not the target.
+- **−** Any future desire for a richer admin dashboard (wide tables, side-by-side panels) will need either a dedicated `/admin` layout that opts out of the app shell, or a new ADR reversing this one.
+
+Related: `app/layout.tsx`, `scripts/screenshot.sh`, the "Mobile-First Responsive Rules" section in `CLAUDE.md`.

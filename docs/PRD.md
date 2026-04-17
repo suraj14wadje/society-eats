@@ -3,6 +3,7 @@
 ## Changelog
 
 - 2026-04-17 — v0.1 initial PRD, v1 scope locked.
+- 2026-04-17 — v0.2 made mobile-first a first-class requirement (residents are on phones); added responsive rule to v1 features. See ADR-007.
 
 ## Problem
 
@@ -38,6 +39,7 @@ This is not an attempt to build Swiggy. It's a household tool for one kitchen, o
 6. **Order history + status** — resident sees their own orders with current status
 7. **Admin dashboard** — only for `profiles.is_admin = true`. Live order list (via Supabase Realtime), click to update status (`placed → payment_pending → paid → cooking → out_for_delivery → delivered | cancelled`)
 8. **Vercel deploy** — `society-eats.vercel.app` (no custom domain in v1)
+9. **Mobile-first responsive web** — every page designed for 375–414px phones (primary target: 4G Android). Desktop viewports render the same layout centered in a `max-w-md` app shell; no separate desktop UI. See [ADR-007](./decisions.md).
 
 ## Non-Goals for v1
 
