@@ -11,6 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:reset": "npx supabase db reset --local",
+    "supabase:types": "npx supabase gen types typescript --local > types/supabase.ts",
     "prepare": "husky"
   },
   "lint-staged": {

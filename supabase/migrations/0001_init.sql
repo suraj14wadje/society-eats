@@ -11,22 +11,6 @@ set lock_timeout = 0;
 create extension if not exists "pgcrypto";
 
 -- ============================================================================
--- Helper: is_admin() — used by RLS policies
--- ============================================================================
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select coalesce(
-    (select is_admin from public.profiles where id = auth.uid()),
-    false
-  );
-$$;
-
--- ============================================================================
 -- societies (seeded with exactly one row for v1)
 -- ============================================================================
 create table public.societies (
@@ -74,6 +58,23 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 alter table public.profiles enable row level security;
+
+-- ============================================================================
+-- Helper: is_admin() — used by RLS policies on profiles and downstream tables.
+-- Defined AFTER public.profiles so its body can reference the table.
+-- ============================================================================
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select is_admin from public.profiles where id = auth.uid()),
+    false
+  );
+$$;
 
 create policy "profiles: self read"
   on public.profiles for select

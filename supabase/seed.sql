@@ -1,5 +1,8 @@
--- Development seed data. Overwrite the society/building names before running
--- against your real project.
+-- Development seed data.
+--
+-- TODO(before go-live): replace the placeholder society name/code, building
+-- names, and menu items below with the real society's data. Tracked as a
+-- follow-on ticket filed from #1; safe to leave as-is for all local dev.
 --
 -- This seed intentionally does NOT create an auth user or admin profile —
 -- those come from real phone-OTP signup (see SETUP.md for promoting the
