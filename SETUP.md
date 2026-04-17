@@ -38,8 +38,6 @@ Copy the relevant fields into `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY from above>
 SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY from above>
-NEXT_PUBLIC_UPI_ID=test@upi
-NEXT_PUBLIC_UPI_QR_URL=/upi-qr.png
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -85,45 +83,41 @@ select full_name, phone, is_admin from profiles;
 
 ---
 
-## Section 2 — Cloud deploy (deferred)
+## Section 2 — Cloud deploy
 
-> **Not required for local dev.** These steps belong to the Vercel deploy ticket (#9) + a follow-on "provision cloud Supabase" ticket. Skim once you're ready to ship publicly.
+> **Not required for local dev.** These steps back ticket #12 (cloud Supabase provisioning) and ticket #9 (Vercel deploy). Skim once you're ready to ship publicly. ADR-008 removed UPI in favour of Cash on Delivery, so there are no UPI assets to wire.
 
 ### 2.1 Supabase cloud project
 
-1. Create a new project at [supabase.com](https://supabase.com) in the **Mumbai** region. Free tier is fine.
-2. Copy from **Project Settings → API** into the Vercel env vars (not `.env.local`):
+1. Create a new project at [supabase.com](https://supabase.com) in the **Mumbai** region (free tier). Keep the DB password safe — Supabase only shows it once.
+2. Copy from **Project Settings → API** into the Vercel env vars (not `.env.local` — local keeps pointing at the Docker stack per ADR-006):
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-3. **Enable phone auth**: Auth → Providers → Phone → toggle on. Pick MSG91 (cheaper for India — ~₹0.20/OTP) or Twilio and add credentials.
-4. Link and push:
+3. **Enable phone auth**: Auth → Providers → Phone → toggle on. Pick Twilio (matches the scaffolded `supabase/config.toml`) and paste the Twilio account SID, Message Service SID, and auth token from your Twilio console. Also set `SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN` in Vercel env — the value is only read by the running gotrue instance, never committed.
+4. Link and push both migrations:
    ```bash
    npx supabase login
    npx supabase link --project-ref <your-ref>
-   npx supabase db push                          # runs supabase/migrations/*.sql
+   npx supabase db push                          # runs supabase/migrations/*.sql (0001 + 0002)
    ```
-   Seed via Studio → SQL editor (paste `supabase/seed.sql`), then edit society/building/menu names to match your real society.
-5. Regenerate types against the cloud schema:
+   Seed via Studio → SQL editor (paste `supabase/seed.sql`). Placeholder names are fine for the first push; swapping them for the real society/menu is tracked in ticket #13.
+5. Regenerate types against the cloud schema — expect a byte-identical diff vs the local run. Any drift means a migration didn't apply cleanly:
    ```bash
    npx supabase gen types typescript --linked > types/supabase.ts
    ```
 
-### 2.2 UPI assets
-
-1. Pick your UPI ID (e.g., `yourname@upi`). Put it in Vercel env as `NEXT_PUBLIC_UPI_ID`.
-2. Generate a QR for that UPI ID (any UPI app → "My QR" → screenshot). Save as `public/upi-qr.png`. Set `NEXT_PUBLIC_UPI_QR_URL=/upi-qr.png`.
-
-### 2.3 Vercel deploy
+### 2.2 Vercel deploy
 
 1. Push `main` to GitHub.
 2. Import the repo at [vercel.com/new](https://vercel.com/new).
-3. Add every `.env.local` key as a Vercel env var, except override `NEXT_PUBLIC_APP_URL=https://<project>.vercel.app`.
+3. Add every `.env.local` key as a Vercel env var, except override `NEXT_PUBLIC_APP_URL=https://<project>.vercel.app`. Also add `SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN` if Twilio is configured.
 4. Deploy. First deploy takes ~2 minutes.
 
-### 2.4 Verify end-to-end on production
+### 2.3 Verify end-to-end on production
 
-- Open `https://<project>.vercel.app` → sign up with phone → complete onboarding → browse menu → place a test order with a fake UPI ref → Supabase Studio, flip your profile's `is_admin = true`, reload → admin dashboard shows the test order appear live. Update its status; the resident's order page updates without refresh.
+- Open `https://<project>.vercel.app` → browse the public menu → add a thali to the cart → checkout → sign up with a real phone (real Twilio OTP) → place a Cash on Delivery order.
+- In Supabase Studio → SQL editor, flip your profile's `is_admin = true`. Reload the app → `/admin/queue` shows the test order live. Advance it through `cooking → out_for_delivery → delivered`; the resident's order page updates in real time without a refresh.
 
 ---
 

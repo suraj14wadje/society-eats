@@ -268,3 +268,32 @@ Two new columns support the panel: `societies.orders_paused boolean` and `menu_i
 - **−** Stock decrement is eventually consistent with reality — Meera might cook an extra thali without updating. Acceptable; the operator screen is the single place she goes to reconcile.
 
 Related: `supabase/migrations/0002_cod_operator_public_menu.sql`, `app/admin/queue/page.tsx`, `app/admin/controls/page.tsx`.
+
+---
+
+## ADR-011 — Cloud Supabase provisioned; local stays the default dev loop
+
+**Date**: 2026-04-18
+**Status**: Accepted
+
+### Context
+
+ADR-006 parked cloud provisioning until a Vercel deploy was imminent. That moment has arrived: a cloud Supabase project was created in the Mumbai region on 2026-04-18 so the upcoming Vercel deploy (#9) has a real backend to talk to. #12 now executes the link + `db push` + types-regen sequence against that project.
+
+Phone OTP on cloud uses **Twilio** as the SMS provider — `supabase/config.toml` is already scaffolded for the Twilio block, so there's no provider-switching overhead. Twilio credentials live only in (a) the Supabase cloud dashboard (Auth → Providers → Phone) and (b) the Vercel project env as `SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN`. They are never committed to git.
+
+### Decision
+
+Provision now; keep local as the dev default. The cloud project is for production and for any manual QA against the shipped pipeline; everyday development continues against the Docker stack per ADR-006. `.env.local` keeps pointing at `127.0.0.1:54321`. Cloud env vars live only in Vercel.
+
+Migration hygiene rule: `supabase db push` stays the single path from local migration files to cloud schema. No ad-hoc schema edits in Studio. If a migration is needed, it's written as `supabase/migrations/NNNN_*.sql`, pushed locally via `db reset`, then pushed to cloud via `db push` — in that order, in the same PR.
+
+### Consequences
+
+- **+** #9 (Vercel deploy) has a backend to connect to on day one; the deploy ticket is purely about the Next.js host + env wiring.
+- **+** Schema parity between local and cloud is enforced by `supabase db push` — the generated types regen against `--linked` must produce a zero diff, which catches drift at PR time rather than at production debug time.
+- **+** Twilio test phones can be left in `[auth.sms.test_otp]` (config.toml) for local, while cloud uses the real provider — same provider, two modes, no forked config story.
+- **−** Any developer with repo access can now reach cloud data via the linked `supabase` CLI if they run `db push` without care. Mitigated: only the repo owner has the DB password + access token; the `link` step records only the project-ref, not credentials.
+- **−** Ticket #14 (config.toml env-sub for Twilio auth token) remains open — the local stub stays in the committed config. This is safe because `[auth.sms.test_otp]` short-circuits the provider locally, but #14 must land before any second developer joins so their local stack doesn't accidentally hit the real Twilio account.
+
+Related: [SETUP.md §2](../SETUP.md), GitHub issues #9 (Vercel deploy), #13 (real seed values), #14 (Twilio env-sub).
