@@ -97,6 +97,20 @@ If the work introduced a decision worth remembering or changed the product shape
 - Zod for all input validation at API boundaries and form submits.
 - Errors: typed, never expose stack traces to clients, log server-side with a correlation ID.
 
+## Mobile-First Responsive Rules
+
+Residents are on 4G Android phones — mobile is the product, desktop is a centered fallback.
+
+- **Design at 375px first.** Default Tailwind classes = mobile styles. Desktop viewports inherit a `max-w-md` centered app shell from `app/layout.tsx` — do NOT add per-page desktop layouts.
+- **Breakpoint usage**: use `sm:`/`md:`/`lg:` sparingly, only for small typography/spacing tweaks (e.g., slightly larger heading on wider screens). No multi-column grids, no sidebars, no desktop-only components.
+- **Tap targets ≥ 44px** — use `h-11` minimum on buttons and form inputs.
+- **Inputs use `text-base` (16px)** to prevent iOS zooming on focus.
+- **No horizontal scroll, ever.** Long strings wrap or truncate; tables become stacked cards on narrow screens.
+- **Viewport meta** is set in `app/layout.tsx` with `maximum-scale=1` — don't add conflicting meta tags.
+- **Safe areas**: if you add sticky bottom bars, use `pb-[env(safe-area-inset-bottom)]` so the iOS home-indicator doesn't overlap content.
+
+See [ADR-007](./docs/decisions.md) for the full rationale.
+
 ## Security Standards (lighter than SOC 2, still non-negotiable)
 
 This isn't SOC 2, but these are the rules that keep the app from leaking data or taking money we can't trace:
@@ -151,7 +165,8 @@ Every feature requires tests before completion.
 ### Screenshot tests (required for UI changes)
 
 - Capture with Playwright via `./scripts/screenshot.sh <path> <name>`.
-- Save to `evidence/screenshots/YYYY-MM-DD-<name>.png`.
+- Saved to `evidence/screenshots/YYYY-MM-DD-<name>.png`.
+- **Default viewport is mobile (390×844)** — this is what reviewers see, because this is what users see. Pass `--desktop` to also capture 1280×800 when a change specifically affects the desktop-centered framing.
 
 ## PR Workflow
 

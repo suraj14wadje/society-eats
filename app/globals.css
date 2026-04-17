@@ -4,12 +4,70 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===========================================================================
+   Society Eats — Natural Fresh palette.
+   Ported from /tmp/design-pkg-v2/society-eats/project/styles/tokens.css.
+   =========================================================================== */
+
+:root {
+  /* Greens — coriander to forest. */
+  --se-green-50: #f1f6ee;
+  --se-green-100: #dfecd6;
+  --se-green-200: #c0d9ae;
+  --se-green-300: #9bc07f;
+  --se-green-400: #7aa85c;
+  --se-green-500: #5c8d42;
+  --se-green-600: #467132;
+  --se-green-700: #385a28;
+  --se-green-800: #2a4320;
+
+  /* Cream — warm off-white. */
+  --se-cream-50: #fbf8ef;
+  --se-cream-100: #f7f2e3;
+  --se-cream-200: #ede5cf;
+  --se-cream-300: #ddd2b3;
+  --se-cream-400: #c4b68f;
+
+  /* Clay — tandoor accents. */
+  --se-clay-50: #fdf2ec;
+  --se-clay-100: #f9ddcc;
+  --se-clay-200: #f2b896;
+  --se-clay-300: #e8906a;
+  --se-clay-400: #d86e45;
+  --se-clay-500: #b8522c;
+  --se-clay-600: #924021;
+
+  /* Turmeric — warning yellow. */
+  --se-turmeric-200: #faf0d1;
+  --se-turmeric-300: #f4c444;
+  --se-turmeric-400: #e0a820;
+  --se-turmeric-500: #b8881a;
+  --se-turmeric-600: #8a6510;
+
+  /* Ink — warm neutrals. */
+  --se-ink-100: #dbd8cc;
+  --se-ink-200: #b7b2a0;
+  --se-ink-300: #8a8674;
+  --se-ink-400: #5f5c4d;
+  --se-ink-500: #3d3b31;
+  --se-ink-600: #2a2822;
+  --se-ink-700: #1d1c17;
+
+  /* Lines. */
+  --se-line: #e5ddc6;
+  --se-line-strong: #c4b68f;
+
+  /* Motion. */
+  --se-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+  --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +107,38 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: var(--se-cream-50);
+  --foreground: var(--se-ink-700);
+  --card: var(--se-cream-100);
+  --card-foreground: var(--se-ink-700);
+  --popover: var(--se-cream-50);
+  --popover-foreground: var(--se-ink-700);
+  --primary: var(--se-ink-600);
+  --primary-foreground: var(--se-cream-50);
+  --secondary: var(--se-cream-100);
+  --secondary-foreground: var(--se-ink-600);
+  --muted: var(--se-cream-100);
+  --muted-foreground: var(--se-ink-300);
+  --accent: var(--se-green-600);
+  --accent-foreground: var(--se-cream-50);
+  --destructive: var(--se-clay-500);
+  --border: var(--se-line);
+  --input: var(--se-line-strong);
+  --ring: var(--se-green-600);
+  --chart-1: var(--se-green-600);
+  --chart-2: var(--se-clay-400);
+  --chart-3: var(--se-turmeric-400);
+  --chart-4: var(--se-ink-400);
+  --chart-5: var(--se-cream-400);
+  --radius: 0.875rem;
+  --sidebar: var(--se-cream-50);
+  --sidebar-foreground: var(--se-ink-700);
+  --sidebar-primary: var(--se-green-600);
+  --sidebar-primary-foreground: var(--se-cream-50);
+  --sidebar-accent: var(--se-cream-100);
+  --sidebar-accent-foreground: var(--se-ink-600);
+  --sidebar-border: var(--se-line);
+  --sidebar-ring: var(--se-green-600);
 }
 
 .dark {
@@ -123,8 +181,51 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
   html {
-    @apply font-sans;
+    font-family: var(--font-sans);
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* prevent iOS zoom */
+  }
+}
+
+/* ===========================================================================
+   Keyframes used by resident flow.
+   =========================================================================== */
+
+@keyframes se-check-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(70, 113, 50, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(70, 113, 50, 0);
+  }
+}
+
+@keyframes se-dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 5px rgba(70, 113, 50, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(70, 113, 50, 0);
+  }
+}
+
+@keyframes se-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
   }
 }

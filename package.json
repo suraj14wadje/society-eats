@@ -11,6 +11,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:reset": "npx supabase db reset --local",
+    "supabase:types": "npx supabase gen types typescript --local > types/supabase.ts",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -26,6 +30,7 @@
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"
   },
+  "packageManager": "pnpm@10.15.1",
   "dependencies": {
     "@base-ui/react": "^1.4.0",
     "@hookform/resolvers": "^5.2.2",
@@ -33,6 +38,7 @@
     "@supabase/supabase-js": "^2.103.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "input-otp": "^1.4.2",
     "lucide-react": "^1.8.0",
     "next": "16.2.4",
     "next-themes": "^0.4.6",

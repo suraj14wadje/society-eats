@@ -4,31 +4,33 @@ Living document. When a feature gets deferred, moved in, or explicitly ruled out
 
 ## In Scope for v1
 
-1. Phone OTP auth via Supabase
-2. Profile onboarding — Society (fixed, seeded), Building (dropdown from seeded list), Flat Number (freetext), Full Name
-3. Menu list page — residents see today's available items
-4. Menu item detail page
-5. Client-side cart with persistence (localStorage or zustand + persist)
-6. Checkout — slot picker, UPI QR + ID display, UPI reference number capture, order create
-7. Order history for residents (own orders)
-8. Live order status page for a single order
-9. Admin dashboard — list + filter orders, update status, uses Supabase Realtime
-10. Production deploy on `society-eats.vercel.app`
-11. Initial seed data (society + buildings + 5 menu items) via a Supabase migration
+1. **Menu-first landing** — `/` is a public menu, no login required (ADR-009)
+2. **Cart** — Zustand + localStorage client-side persistence
+3. **Checkout with auth-at-end** — Name / Mobile / Tower / Flat form then OTP for first-timers; saved-address card for returning residents
+4. **Cash on Delivery** (ADR-008) — only payment method in v1
+5. **Order confirmation + live status tracker** — 4-stage design tracker, realtime-updating
+6. **Past Thalis** — resident order history at `/history`, last 30 days, one-tap reorder
+7. **Meera's operator surface** (ADR-010) at `/admin/queue` (live queue) and `/admin/controls` (pause toggle + per-item stock)
+8. **Kitchen state** — `societies.orders_paused` + `menu_items.stock` back the real sold-out / closed / past-cutoff edge states
+9. **Edge states** for residents — closed kitchen, past lunch cutoff (dinner preview), mostly sold out, OTP wrong, order failed mid-checkout, empty history
+10. **Production deploy** on `society-eats.vercel.app`
+11. **Initial seed data** (society + buildings + 5 design-aligned menu items) via Supabase migration
+12. **Local-first dev loop** — `npx supabase start` + test OTPs (ADR-006); cloud provisioning once, paired with Vercel deploy
+13. **Mobile-first responsive layout** — 375–414px phones primary; desktop renders the same layout centered in `max-w-md` (ADR-007)
 
 ## Deferred to v1.1 or later
 
 ### Payments
 
-- **Razorpay / Cashfree integration** — automated UPI confirmation via webhook. Deferred; ADR-002 explains the trade-off. Trigger to move this in: sustained >10 orders/day or disputes about unverified payments.
-- **Refund workflow** — admin-initiated refund with status tracking. Deferred; refunds are manual over UPI in v1.
-- **Cash on delivery** — considered and dropped. UPI manual reconciliation covers the same need with less operational risk.
+- **UPI manual reconciliation** — considered in ADR-002, then reversed by ADR-008 because Meera prefers cash. Could return in v1.1 if residents ask for digital rails.
+- **Razorpay / Cashfree integration** — automated UPI confirmation via webhook. Deferred. Trigger to move this in: sustained >10 orders/day or complaints about carrying change.
+- **Refund workflow** — admin-initiated refund with status tracking. Deferred; refunds are cash-handed-back in v1.
 
 ### Menu & Kitchen Ops
 
-- **Admin menu CRUD UI** — in v1 the owner edits menu items directly in Supabase Studio. A proper admin CRUD surface is deferred until the menu changes more than twice a week.
-- **Daily menu scheduling** — availability windows per item, auto-disable after slot ends. Deferred; the `is_available` boolean is flipped manually.
-- **Inventory tracking** — out-of-stock count, auto-disable when depleted. Deferred.
+- **Admin menu CRUD UI** — partially in v1: Meera's `/admin/controls` screen toggles availability + stock per item. Adding / removing menu items is still done in Supabase Studio. Full CRUD deferred.
+- **Daily menu scheduling** — automated lunch/dinner switching driven by a scheduler table. v1 uses hardcoded IST cutoffs (11:30am lunch, 5:30pm dinner). Deferred.
+- **Inventory with history** — `menu_items.stock` tracks today's count (ADR-010) but we don't store a per-day audit of stock changes. Deferred.
 - **Item variants / add-ons / quantity-based pricing** — deferred. v1 is one price per item.
 
 ### Notifications
@@ -40,9 +42,9 @@ Living document. When a feature gets deferred, moved in, or explicitly ruled out
 
 ### Residents
 
-- **Address book (multiple delivery addresses)** — one flat per account in v1.
-- **Favorites / reorder** — deferred.
-- **Ratings / reviews** — deferred.
+- **Address book (multiple delivery addresses)** — one flat per account in v1. The Hi-Fi design showed two saved addresses; that's v1.1.
+- **One-tap reorder** — shipped in v1 via `/history`.
+- **Ratings / reviews** — deferred. `HistoryScreen` has space for stars but the button is disabled in v1.
 - **Referral / invite flow** — deferred.
 
 ### Ops & Growth
@@ -76,3 +78,4 @@ Living document. When a feature gets deferred, moved in, or explicitly ruled out
 - International expansion
 - Becoming a marketplace for multiple kitchens
 - A native mobile app (web app is the product)
+- Desktop-specific multi-column layouts / tablet-optimized views — one mobile-first layout, centered on wider screens (ADR-007)
