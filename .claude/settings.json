@@ -1,0 +1,53 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in *.ts|*.tsx|*.js|*.jsx) cd /home/pie/Documents/society-eats && npx eslint --fix \"$f\" 2>/dev/null; ;; esac; } || true",
+            "timeout": 30,
+            "statusMessage": "Linting changed file..."
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; cd /home/pie/Documents/society-eats && npx prettier --write --ignore-unknown \"$f\" 2>/dev/null; } || true",
+            "timeout": 15,
+            "statusMessage": "Formatting changed file..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreCompact\",\"additionalContext\":\"CRITICAL CONTEXT TO PRESERVE: 1) Current GitHub issue number and status. 2) Current git branch name. 3) Any failing tests and their error messages. 4) What the human last approved or rejected. 5) Next step in the automation loop from CLAUDE.md.\"}}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /home/pie/Documents/society-eats && mkdir -p evidence/test-reports && if [ -f package.json ] && grep -q vitest package.json 2>/dev/null; then npx vitest run --reporter=json 2>/dev/null | jq '{tests: .numTotalTests, passed: .numPassedTests, failed: .numFailedTests, timestamp: now | todate}' > evidence/test-reports/latest-run.json 2>/dev/null; fi || true",
+            "timeout": 120,
+            "async": true,
+            "statusMessage": "Generating test report..."
+          }
+        ]
+      }
+    ]
+  }
+}
